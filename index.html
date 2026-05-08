@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FazendApp</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#27500A;--green-mid:#3B6D11;--green-light:#639922;--green-bg:#EAF3DE;
+  --gray-bg:#F5F5F2;--border:#E0DDD5;--text:#1A1A1A;--text2:#666;--text3:#999;
+  --white:#fff;--danger:#A32D2D;--danger-bg:#FCEBEB;--amber:#633806;--amber-bg:#FAEEDA;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--coal:#444441;--coal-bg:#F1EFE8;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F0EDE6;color:var(--text);min-height:100vh}
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .25s}
+.sidebar.hidden{transform:translateX(-220px)}
+.main{flex:1;margin-left:220px;padding:24px;transition:margin .25s}
+.main.full{margin-left:0}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-220px)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:16px}
+  .metrics{grid-template-columns:1fr 1fr!important}
+  .grid2{grid-template-columns:1fr!important}
+}
+/* SIDEBAR */
+.logo{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.logo-title{font-size:16px;font-weight:700;color:var(--green)}
+.logo-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-sec{font-size:10px;color:var(--text3);padding:10px 8px 4px;letter-spacing:.06em;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:background .15s}
+.ni:hover{background:var(--gray-bg)}
+.ni.active{background:var(--green-bg);color:var(--green);font-weight:600}
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:10px}
+.ptitle{font-size:18px;font-weight:700;color:var(--text)}
+.menu-btn{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
+@media(max-width:768px){.menu-btn{display:block}}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+.overlay.show{display:block}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);font-size:12px;cursor:pointer;color:var(--text);font-weight:500;transition:background .15s}
+.btn:hover{background:var(--gray-bg)}
+.btn-primary{background:var(--green);border-color:var(--green);color:var(--white)}
+.btn-primary:hover{background:var(--green-mid)}
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ct{font-size:14px;font-weight:600;color:var(--text)}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.met{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.met-lbl{font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.met-val{font-size:22px;font-weight:700;color:var(--text)}
+.met-sub{font-size:11px;margin-top:3px}
+.up{color:var(--green-mid)}.down{color:var(--danger)}.neu{color:var(--text2)}
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.bg{background:var(--green-bg);color:var(--green)}.br{background:var(--danger-bg);color:var(--danger)}
+.ba{background:var(--amber-bg);color:var(--amber)}.bb{background:var(--blue-bg);color:var(--blue)}
+.bc{background:var(--coal-bg);color:var(--coal)}
+/* TABLE */
+.tbl{width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed}
+.tbl th{text-align:left;font-size:10px;font-weight:600;color:var(--text2);padding:0 8px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+.tbl td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#FAFAF8}
+.muted{color:var(--text2)!important}
+/* FORM */
+.fields{display:grid;gap:12px}
+.f2{grid-template-columns:1fr 1fr}
+.f3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:600px){.f2,.f3{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:13px;font-family:inherit;background:var(--white);color:var(--text);
+  transition:border .15s
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green-light)}
+.field textarea{resize:vertical;min-height:70px}
+/* TIPO GRID */
+.tipo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+@media(max-width:600px){.tipo-grid{grid-template-columns:repeat(2,1fr)}}
+.tipo-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:var(--radius);border:1.5px solid var(--border);cursor:pointer;background:var(--white);transition:all .15s;text-align:center}
+.tipo-btn:hover{background:var(--gray-bg)}
+.tipo-btn.sel{border-color:var(--green-light);background:var(--green-bg)}
+.tipo-btn .ti{font-size:22px}
+.tipo-lbl{font-size:11px;font-weight:600;color:var(--text);line-height:1.3}
+.tipo-sub{font-size:10px;color:var(--text2)}
+/* RESP */
+.resp-row{display:flex;gap:6px;flex-wrap:wrap}
+.resp-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);background:var(--white);transition:all .15s}
+.resp-btn:hover{background:var(--gray-bg)}
+.resp-btn.sel{border-color:var(--green-light);background:var(--green-bg);color:var(--green)}
+.avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+/* MISC */
+.row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bar-wrap{width:80px;height:5px;background:var(--gray-bg);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.confirm-box{background:var(--gray-bg);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none}
+.confirm-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.confirm-row:last-child{border-bottom:none}
+.success-box{background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius);padding:20px;text-align:center;display:none;margin-bottom:16px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:var(--white);padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;display:none;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.loading{text-align:center;padding:32px;color:var(--text2);font-size:13px}
+.seg-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:1px;margin:10px 0 8px}
+.seg{height:100%;border-radius:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.corte-badge{display:inline-flex;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}
+.c1{background:var(--green-bg);color:var(--green)}.c2{background:var(--blue-bg);color:var(--blue)}.c3{background:var(--amber-bg);color:var(--amber)}
+.farm-stat{background:var(--gray-bg);border-radius:var(--radius-sm);padding:10px 12px}
+.farm-stat-lbl{font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.farm-stat-val{font-size:13px;font-weight:600;color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div id="toast" class="toast"></div>
+
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-title">🌿 FazendApp</div>
+      <div class="logo-sub">Gestão integrada</div>
+    </div>
+    <div class="nav">
+      <div class="nav-sec">Principal</div>
+      <div class="ni active" onclick="nav('dashboard',this)">📊 Dashboard</div>
+      <div class="nav-sec">Operacional</div>
+      <div class="ni" onclick="nav('rebanho',this)">🐄 Rebanho — Taquara</div>
+      <div class="ni" onclick="nav('carvao',this)">🔥 Carvão</div>
+      <div class="ni" onclick="nav('propriedades',this)">📍 Propriedades</div>
+      <div class="nav-sec">Financeiro</div>
+      <div class="ni" onclick="nav('financeiro',this)">📈 Financeiro</div>
+      <div class="ni" onclick="nav('lancamentos',this)">➕ Lançamentos</div>
+    </div>
+  </div>
+
+  <div class="main" id="main">
+    <div id="page-content"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ymodddawexptdrbzklur.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_i7ozfss6NIFcQ13MbNYWGg_-VJlB_R-';
+
+// API helper
+async function sb(table, method='GET', body=null, filters=''){
+  const url = `${SUPABASE_URL}/rest/v1/${table}${filters}`;
+  const res = await fetch(url, {
+    method,
+    headers:{
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : ''
+    },
+    body: body ? JSON.stringify(body) : null
+  });
+  if(!res.ok){const e=await res.text(); throw new Error(e)}
+  return method==='DELETE' ? null : res.json();
+}
+
+let currentPage = 'dashboard';
+let respAtual = 'Eduardo';
+let tipoAtual = 'compra-gado';
+
+function nav(page, el){
+  currentPage = page;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  closeSidebar();
+  renderPage(page);
+}
+
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+function toast(msg, error=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = error ? '#A32D2D' : '#27500A';
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
+}
+
+function fmt(v){ if(!v && v!==0) return '—'; return 'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtN(v){ return v ? parseFloat(v).toLocaleString('pt-BR') : '—'; }
+
+// ─── PAGES ───────────────────────────────────────────────────────────────────
+
+async function renderPage(page){
+  const c = document.getElementById('page-content');
+  c.innerHTML = `<div class="loading">Carregando...</div>`;
+  try {
+    if(page==='dashboard') await renderDashboard();
+    else if(page==='rebanho') await renderRebanho();
+    else if(page==='carvao') await renderCarvao();
+    else if(page==='propriedades') await renderPropriedades();
+    else if(page==='financeiro') await renderFinanceiro();
+    else if(page==='lancamentos') renderLancamentos();
+  } catch(e){
+    c.innerHTML = `<div class="loading">Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+// DASHBOARD
+async function renderDashboard(){
+  const lancs = await sb('lancamentos','GET',null,'?order=criado_em.desc&limit=5');
+  const talhoes = await sb('talhoes');
+
+  const receitas = lancs.filter(l=>['venda-gado','venda-carvao'].includes(l.tipo)).reduce((a,l)=>a+(l.valor||0),0);
+  const totalTalhoes = talhoes.length;
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Dashboard</div>
+      </div>
+      <button class="btn btn-primary" onclick="nav('lancamentos',document.querySelectorAll('.ni')[5])">➕ Novo lançamento</button>
+    </div>
+    <div class="metrics">
+      <div class="met"><div class="met-lbl">Fazenda Taquara</div><div class="met-val">Gado</div><div class="met-sub neu">Pecuária</div></div>
+      <div class="met"><div class="met-lbl">Fazendas de carvão</div><div class="met-val">4</div><div class="met-sub neu">${totalTalhoes} talhões</div></div>
+      <div class="met"><div class="met-lbl">Lançamentos recentes</div><div class="met-val">${lancs.length}</div><div class="met-sub neu">últimos registros</div></div>
+      <div class="met"><div class="met-lbl">Receita registrada</div><div class="met-val up">${fmt(receitas)}</div><div class="met-sub neu">total no sistema</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Atividade recente</div></div>
+      ${lancs.length===0 ? '<div class="loading">Nenhum lançamento ainda. Comece adicionando um!</div>' :
+        `<table class="tbl"><thead><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Propriedade</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+        ${lancs.map(l=>{
+          const isRec=['venda-gado','venda-carvao'].includes(l.tipo);
+          const data = l.data_lancamento ? new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR').slice(0,5) : '—';
+          return `<tr><td class="muted">${data}</td><td>${l.registrado_por||'—'}</td><td>${tipoLabel(l.tipo)}</td><td>${l.propriedade||'—'}</td><td style="text-align:right;font-weight:600;color:${isRec?'var(--green-mid)':'var(--danger)'}">${l.valor?fmt(l.valor):'—'}</td></tr>`;
+        }).join('')}
+        </tbody></table>`
+      }
+    </div>
+  `;
+}
+
+// REBANHO
+async function renderRebanho(){
+  const lancs = await sb('lancamentos','GET',null,"?or=(tipo.eq.compra-gado,tipo.eq.venda-gado,tipo.eq.pesagem,tipo.eq.vacinacao)&order=data_lancamento.asc&limit=500");
+  const compras = lancs.filter(l=>l.tipo==='compra-gado');
+  const vendas = lancs.filter(l=>l.tipo==='venda-gado');
+  const pesagens = lancs.filter(l=>l.tipo==='pesagem');
+  const vacinas = lancs.filter(l=>l.tipo==='vacinacao');
+
+  const totalComprado = compras.reduce((a,l)=>a+(l.quantidade||0),0);
+  const totalVendido = vendas.reduce((a,l)=>a+(l.quantidade||0),0);
+  const cabecasVivo = totalComprado - totalVendido;
+
+  const lotes = {};
+  compras.forEach(l=>{ const lt=l.lote||'Sem lote'; if(!lotes[lt])lotes[lt]={c:0,v:0}; lotes[lt].c+=(l.quantidade||0); });
+  vendas.forEach(l=>{ const lt=l.lote||'Sem lote'; if(!lotes[lt])lotes[lt]={c:0,v:0}; lotes[lt].v+=(l.quantidade||0); });
+
+  const historico = [...compras,...vendas].sort((a,b)=>new Date(a.data_lancamento)-new Date(b.data_lancamento));
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Rebanho — Taquara</div>
+      </div>
+      <button class="btn btn-primary" onclick="nav('lancamentos',document.querySelectorAll('.ni')[5])">➕ Registrar</button>
+    </div>
+
+    <div style="background:var(--green);border-radius:var(--radius);padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">🐄 Cabeças no pasto agora</div>
+        <div style="font-size:52px;font-weight:800;color:#fff;line-height:1">${cabecasVivo}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:6px">${totalComprado} compradas − ${totalVendido} vendidas</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="background:rgba(255,255,255,0.15);border-radius:var(--radius);padding:12px 18px;text-align:center">
+          <div style="font-size:10px;color:rgba(255,255,255,0.7);margin-bottom:4px;text-transform:uppercase">Entradas</div>
+          <div style="font-size:26px;font-weight:700;color:#fff">+${totalComprado}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.15);border-radius:var(--radius);padding:12px 18px;text-align:center">
+          <div style="font-size:10px;color:rgba(255,255,255,0.7);margin-bottom:4px;text-transform:uppercase">Saídas</div>
+          <div style="font-size:26px;font-weight:700;color:#fff">−${totalVendido}</div>
+        </div>
+      </div>
+    </div>
+
+    ${Object.keys(lotes).length>0?`
+    <div class="card" style="margin-bottom:16px">
+      <div class="ch"><div class="ct">Saldo por lote</div></div>
+      <table class="tbl"><thead><tr><th>Lote</th><th>Compradas</th><th>Vendidas</th><th>Saldo atual</th></tr></thead><tbody>
+      ${Object.entries(lotes).map(([lote,v])=>{
+        const s=v.c-v.v;
+        return '<tr><td style="font-weight:600">'+lote+'</td><td style="color:var(--green-mid)">+'+v.c+' cab.</td><td style="color:var(--danger)">−'+v.v+' cab.</td><td style="font-weight:700;font-size:14px;color:'+(s>=0?'var(--green-mid)':'var(--danger)')+'">'+s+' cab.</td></tr>';
+      }).join('')}
+      </tbody></table>
+    </div>`:''}
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="ch"><div class="ct">Histórico de movimentações</div><span class="badge bb">ordem cronológica</span></div>
+      ${historico.length===0?'<div class="loading">Nenhuma movimentação registrada. Use o botão Registrar para lançar compras e vendas.</div>':`
+      <table class="tbl"><thead><tr><th style="width:90px">Data</th><th style="width:70px">Tipo</th><th style="width:70px">Lote</th><th style="width:55px">Qtd</th><th style="width:80px">Peso médio</th><th>Origem/Destino</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+      ${historico.map(l=>{
+        const isC=l.tipo==='compra-gado';
+        const data=l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+        return '<tr><td class="muted">'+data+'</td><td><span class="badge '+(isC?'ba':'bg')+'">'+(isC?'Compra':'Venda')+'</span></td><td class="muted">'+(l.lote||'—')+'</td><td style="font-weight:700;color:'+(isC?'var(--green-mid)':'var(--danger)')+'">'+(isC?'+':'-')+(l.quantidade||0)+'</td><td class="muted">'+(l.peso_medio?l.peso_medio+' kg':'—')+'</td><td class="muted">'+(l.descricao||'—')+'</td><td style="text-align:right;font-weight:600;color:'+(isC?'var(--danger)':'var(--green-mid)')+'">'+fmt(l.valor)+'</td></tr>';
+      }).join('')}
+      </tbody></table>`}
+    </div>
+
+    <div class="grid2">
+      <div class="card" style="margin-bottom:0">
+        <div class="ch"><div class="ct">Pesagens</div></div>
+        ${pesagens.length===0?'<div class="loading">Nenhuma pesagem registrada</div>':`
+        <table class="tbl"><thead><tr><th>Data</th><th>Lote</th><th>Peso médio</th></tr></thead><tbody>
+        ${pesagens.map(l=>'<tr><td class="muted">'+(l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR'):'—')+'</td><td>'+(l.lote||'—')+'</td><td>'+(l.peso_medio?l.peso_medio+' kg':'—')+'</td></tr>').join('')}
+        </tbody></table>`}
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="ch"><div class="ct">Vacinações</div></div>
+        ${vacinas.length===0?'<div class="loading">Nenhuma vacinação registrada</div>':`
+        <table class="tbl"><thead><tr><th>Data</th><th>Lote</th><th>Vacina</th><th>Custo</th></tr></thead><tbody>
+        ${vacinas.map(l=>'<tr><td class="muted">'+(l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR'):'—')+'</td><td>'+(l.lote||'—')+'</td><td>'+(l.vacina||'—')+'</td><td>'+fmt(l.valor)+'</td></tr>').join('')}
+        </tbody></table>`}
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:0">
+      <div class="card" style="margin-bottom:0">
+        <div class="ch"><div class="ct">Pesagens</div></div>
+        ${pesagens.length===0?'<div class="loading">Nenhuma pesagem registrada</div>':
+          `<table class="tbl"><thead><tr><th>Data</th><th>Lote</th><th>Peso médio</th></tr></thead><tbody>
+          ${pesagens.map(l=>`<tr><td class="muted">${l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</td><td>${l.lote||'—'}</td><td>${l.peso_medio?l.peso_medio+' kg':'—'}</td></tr>`).join('')}
+          </tbody></table>`}
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="ch"><div class="ct">Vacinações</div></div>
+        ${vacinas.length===0?'<div class="loading">Nenhuma vacinação registrada</div>':
+          `<table class="tbl"><thead><tr><th>Data</th><th>Lote</th><th>Vacina</th><th>Custo</th></tr></thead><tbody>
+          ${vacinas.map(l=>`<tr><td class="muted">${l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</td><td>${l.lote||'—'}</td><td>${l.vacina||'—'}</td><td>${l.valor?fmt(l.valor):'—'}</td></tr>`).join('')}
+          </tbody></table>`}
+      </div>
+    </div>
+  `;
+}
+
+// CARVÃO
+async function renderCarvao(){
+  const lancs = await sb('lancamentos','GET',null,"?or=(tipo.eq.prod-carvao,tipo.eq.venda-carvao)&order=data_lancamento.desc&limit=30");
+  const prods = lancs.filter(l=>l.tipo==='prod-carvao');
+  const vendas = lancs.filter(l=>l.tipo==='venda-carvao');
+  const fazendas = ['Pombinha','Pindorama','Morro da Garça','Área do Junco'];
+
+  const estoque = {};
+  fazendas.forEach(f=>{
+    const p = prods.filter(l=>l.propriedade===f).reduce((a,l)=>a+(l.toneladas||0),0);
+    const v = vendas.filter(l=>l.propriedade===f).reduce((a,l)=>a+(l.toneladas||0),0);
+    estoque[f] = p - v;
+  });
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Carvão</div>
+      </div>
+      <button class="btn btn-primary" onclick="nav('lancamentos',document.querySelectorAll('.ni')[5])">➕ Lançar</button>
+    </div>
+    <div class="metrics">
+      <div class="met"><div class="met-lbl">Estoque total</div><div class="met-val">${Object.values(estoque).reduce((a,v)=>a+v,0).toFixed(1)} t</div></div>
+      <div class="met"><div class="met-lbl">Total produzido</div><div class="met-val">${prods.reduce((a,l)=>a+(l.toneladas||0),0).toFixed(1)} t</div></div>
+      <div class="met"><div class="met-lbl">Total vendido</div><div class="met-val">${vendas.reduce((a,l)=>a+(l.toneladas||0),0).toFixed(1)} t</div></div>
+      <div class="met"><div class="met-lbl">Receita carvão</div><div class="met-val up">${fmt(vendas.reduce((a,l)=>a+(l.valor||0),0))}</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Estoque por fazenda</div></div>
+      <table class="tbl"><thead><tr><th>Fazenda</th><th>Produzido</th><th>Vendido</th><th>Estoque</th><th>Receita</th></tr></thead><tbody>
+      ${fazendas.map(f=>{
+        const prod = prods.filter(l=>l.propriedade===f).reduce((a,l)=>a+(l.toneladas||0),0);
+        const vend = vendas.filter(l=>l.propriedade===f).reduce((a,l)=>a+(l.toneladas||0),0);
+        const rec = vendas.filter(l=>l.propriedade===f).reduce((a,l)=>a+(l.valor||0),0);
+        return `<tr><td style="font-weight:600">${f}</td><td>${prod.toFixed(1)} t</td><td>${vend.toFixed(1)} t</td><td style="font-weight:600">${(prod-vend).toFixed(1)} t</td><td style="color:var(--green-mid);font-weight:600">${fmt(rec)}</td></tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Últimos lançamentos de carvão</div></div>
+      ${lancs.length===0?'<div class="loading">Nenhum lançamento de carvão ainda</div>':
+        `<table class="tbl"><thead><tr><th>Data</th><th>Fazenda</th><th>Tipo</th><th>Toneladas</th><th>Cargas</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+        ${lancs.slice(0,10).map(l=>`<tr>
+          <td class="muted">${l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR').slice(0,5):'—'}</td>
+          <td>${l.propriedade||'—'}</td>
+          <td><span class="badge ${l.tipo==='prod-carvao'?'bc':'bg'}">${l.tipo==='prod-carvao'?'Produção':'Venda'}</span></td>
+          <td>${l.toneladas?l.toneladas+' t':'—'}</td>
+          <td>${l.cargas||'—'}</td>
+          <td style="text-align:right;font-weight:600;color:${l.tipo==='venda-carvao'?'var(--green-mid)':'var(--text)'}">${l.valor?fmt(l.valor):'—'}</td>
+        </tr>`).join('')}
+        </tbody></table>`}
+    </div>
+  `;
+}
+
+// PROPRIEDADES
+async function renderPropriedades(){
+  const talhoes = await sb('talhoes','GET',null,'?order=fazenda,nome');
+  const fazendas = ['Pombinha','Pindorama','Morro da Garça','Área do Junco'];
+  const cores = {'Pombinha':'var(--coal-bg)','Pindorama':'var(--blue-bg)','Morro da Garça':'var(--amber-bg)','Área do Junco':'var(--green-bg)'};
+  const coresT = {'Pombinha':'var(--coal)','Pindorama':'var(--blue)','Morro da Garça':'var(--amber)','Área do Junco':'var(--green)'};
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Propriedades</div>
+      </div>
+      <button class="btn btn-primary" onclick="showAddTalhao()">➕ Adicionar talhão</button>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🐄</div>
+          <div><div style="font-weight:600;font-size:14px">Fazenda Taquara</div><div style="font-size:11px;color:var(--text2)">Pecuária — gado de corte</div></div>
+        </div>
+        <span class="badge bg">Só gado</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2)">Toda a operação de rebanho está concentrada nesta fazenda. Registre movimentações no módulo Rebanho.</div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;padding-left:2px">Fazendas de carvão</div>
+    <div class="grid2">
+      ${fazendas.map(f=>{
+        const ts = talhoes.filter(t=>t.fazenda===f);
+        return `<div class="card" style="margin-bottom:0">
+          <div class="ch">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;background:${cores[f]};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🔥</div>
+              <div><div style="font-weight:600;font-size:14px">${f}</div><div style="font-size:11px;color:var(--text2)">Carvão vegetal</div></div>
+            </div>
+            <span class="badge ${ts.length>0?'bg':'ba'}">${ts.length} talhão(ões)</span>
+          </div>
+          ${ts.length===0?`<div style="font-size:12px;color:var(--text2);padding:8px 0">Nenhum talhão cadastrado ainda. <a href="#" onclick="showAddTalhaoFazenda('${f}')" style="color:var(--green)">Adicionar</a></div>`:`
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${ts.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--gray-bg);border-radius:6px">
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600">${t.nome}</div>
+                <div style="font-size:11px;color:var(--text2)">${t.hectares?t.hectares+' ha':''} ${t.data_plantio?'· '+new Date(t.data_plantio+'T12:00:00').toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):''}</div>
+              </div>
+              <span class="corte-badge c${t.numero_corte||1}">${t.numero_corte||1}º corte</span>
+              <button onclick="deleteTalhao('${t.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3)" title="Excluir">✕</button>
+            </div>`).join('')}
+          </div>`}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card" id="add-talhao-form" style="display:none;margin-top:16px">
+      <div class="ch"><div class="ct">Novo talhão</div></div>
+      <div class="fields f2">
+        <div class="field"><label>Fazenda</label><select id="tf-fazenda"><option>Pombinha</option><option>Pindorama</option><option>Morro da Garça</option><option>Área do Junco</option></select></div>
+        <div class="field"><label>Nome do talhão</label><input type="text" id="tf-nome" placeholder="Ex: Talhão 1"></div>
+        <div class="field"><label>Hectares</label><input type="number" id="tf-ha" placeholder="Ex: 120" step="0.1"></div>
+        <div class="field"><label>Data de plantio</label><input type="date" id="tf-data"></div>
+        <div class="field"><label>Número do corte</label><select id="tf-corte"><option value="1">1º corte</option><option value="2">2º corte</option><option value="3">3º corte</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" onclick="document.getElementById('add-talhao-form').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarTalhao()">💾 Salvar talhão</button>
+      </div>
+    </div>
+  `;
+}
+
+function showAddTalhao(){ document.getElementById('add-talhao-form').style.display='block'; }
+function showAddTalhaoFazenda(f){
+  document.getElementById('add-talhao-form').style.display='block';
+  document.getElementById('tf-fazenda').value=f;
+  document.getElementById('add-talhao-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function salvarTalhao(){
+  const data = {
+    fazenda: document.getElementById('tf-fazenda').value,
+    nome: document.getElementById('tf-nome').value,
+    hectares: parseFloat(document.getElementById('tf-ha').value)||null,
+    data_plantio: document.getElementById('tf-data').value||null,
+    numero_corte: parseInt(document.getElementById('tf-corte').value)
+  };
+  if(!data.nome){toast('Informe o nome do talhão',true);return;}
+  try{
+    await sb('talhoes','POST',data);
+    toast('Talhão salvo!');
+    await renderPropriedades();
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+async function deleteTalhao(id){
+  if(!confirm('Excluir este talhão?'))return;
+  try{
+    await sb('talhoes','DELETE',null,`?id=eq.${id}`);
+    toast('Talhão removido');
+    await renderPropriedades();
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+// FINANCEIRO
+async function renderFinanceiro(){
+  const lancs = await sb('lancamentos','GET',null,'?order=data_lancamento.asc&limit=500');
+  const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const cores = ['#378ADD','#EF9F27','#97C459','#D85A30','#7F77DD','#5DCAA5','#D4537E','#888780'];
+
+  // Agrupar por mês
+  const porMes = {};
+  lancs.forEach(l=>{
+    if(!l.data_lancamento) return;
+    const d = new Date(l.data_lancamento+'T12:00:00');
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(!porMes[key]) porMes[key]={label:MESES_PT[d.getMonth()]+' '+d.getFullYear(),lancs:[]};
+    porMes[key].lancs.push(l);
+  });
+
+  const mesesOrdenados = Object.entries(porMes).sort((a,b)=>b[0].localeCompare(a[0]));
+
+  // Totais gerais
+  const todasRec = lancs.filter(l=>['venda-gado','venda-carvao'].includes(l.tipo));
+  const todasDesp = lancs.filter(l=>['compra-gado','vacinacao','despesa','manutencao'].includes(l.tipo));
+  const totalRec = todasRec.reduce((a,l)=>a+(l.valor||0),0);
+  const totalDesp = todasDesp.reduce((a,l)=>a+(l.valor||0),0);
+  const resultado = totalRec - totalDesp;
+
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Financeiro</div>
+      </div>
+      <button class="btn btn-primary" onclick="nav('lancamentos',document.querySelectorAll('.ni')[5])">➕ Lançar</button>
+    </div>
+
+    <div class="metrics">
+      <div class="met"><div class="met-lbl">Receita total</div><div class="met-val up">${fmt(totalRec)}</div></div>
+      <div class="met"><div class="met-lbl">Despesas totais</div><div class="met-val down">${fmt(totalDesp)}</div></div>
+      <div class="met"><div class="met-lbl">Resultado geral</div><div class="met-val ${resultado>=0?'up':'down'}">${fmt(resultado)}</div>${totalRec>0?'<div class="met-sub '+(resultado>=0?'up':'down')+'">margem '+Math.round(resultado/totalRec*100)+'%</div>':''}</div>
+      <div class="met"><div class="met-lbl">Meses registrados</div><div class="met-val">${mesesOrdenados.length}</div><div class="met-sub neu">com lançamentos</div></div>
+    </div>
+
+    ${mesesOrdenados.length===0?'<div class="card"><div class="loading">Nenhum lançamento registrado ainda</div></div>':
+      mesesOrdenados.map(([key,mes])=>{
+        const rec = mes.lancs.filter(l=>['venda-gado','venda-carvao'].includes(l.tipo));
+        const desp = mes.lancs.filter(l=>['compra-gado','vacinacao','despesa','manutencao'].includes(l.tipo));
+        const tRec = rec.reduce((a,l)=>a+(l.valor||0),0);
+        const tDesp = desp.reduce((a,l)=>a+(l.valor||0),0);
+        const res = tRec - tDesp;
+
+        // Despesas por categoria
+        const dCats = {};
+        desp.forEach(l=>{ const c=l.categoria||tipoLabel(l.tipo); dCats[c]=(dCats[c]||0)+(l.valor||0); });
+        const dArr = Object.entries(dCats).sort((a,b)=>b[1]-a[1]);
+
+        const lancOrdenados = [...mes.lancs].sort((a,b)=>new Date(b.data_lancamento)-new Date(a.data_lancamento));
+
+        return `<div class="card" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+            <div style="font-size:15px;font-weight:700;color:var(--text)">${mes.label}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="font-size:12px;font-weight:600;color:var(--green-mid)">↑ ${fmt(tRec)}</div>
+              <div style="font-size:12px;font-weight:600;color:var(--danger)">↓ ${fmt(tDesp)}</div>
+              <div style="font-size:12px;font-weight:700;color:${res>=0?'var(--green)':'var(--danger)'}">= ${fmt(res)}</div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-bottom:12px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Receitas</div>
+              ${rec.length===0?'<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhuma receita</div>':
+                rec.map(l=>`<div class="row"><div class="dot" style="background:${['venda-gado'].includes(l.tipo)?'var(--green-light)':'var(--coal)'}"></div><div style="flex:1;font-size:12px">${tipoLabel(l.tipo)}<span style="color:var(--text3);margin-left:4px">${l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR').slice(0,5):''}</span></div><div style="font-weight:600;font-size:12px;color:var(--green-mid)">${fmt(l.valor)}</div></div>`).join('')}
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Despesas por categoria</div>
+              ${dArr.length===0?'<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhuma despesa</div>':
+                dArr.map(([cat,val],i)=>`<div class="row"><div class="dot" style="background:${cores[i%cores.length]}"></div><div style="flex:1;font-size:12px">${cat}</div><div class="bar-wrap"><div class="bar-fill" style="width:${tDesp>0?Math.round(val/tDesp*100):0}%;background:${cores[i%cores.length]}"></div></div><div style="font-weight:600;font-size:12px;color:var(--danger);min-width:60px;text-align:right">${fmt(val)}</div></div>`).join('')}
+            </div>
+          </div>
+
+          <details>
+            <summary style="font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;padding:6px 0">Ver todos os lançamentos (${lancOrdenados.length})</summary>
+            <table class="tbl" style="margin-top:10px"><thead><tr><th style="width:80px">Data</th><th style="width:80px">Por</th><th>Descrição</th><th style="width:100px">Propriedade</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+            ${lancOrdenados.map(l=>{
+              const isRec=['venda-gado','venda-carvao'].includes(l.tipo);
+              const data=l.data_lancamento?new Date(l.data_lancamento+'T12:00:00').toLocaleDateString('pt-BR').slice(0,5):'—';
+              return '<tr><td class="muted">'+data+'</td><td class="muted">'+(l.registrado_por||'—')+'</td><td>'+(l.descricao||tipoLabel(l.tipo))+'</td><td class="muted">'+(l.propriedade||'—')+'</td><td style="text-align:right;font-weight:600;color:'+(isRec?'var(--green-mid)':'var(--danger)')+'">'+fmt(l.valor)+'</td></tr>';
+            }).join('')}
+            </tbody></table>
+          </details>
+        </div>`;
+      }).join('')
+    }
+  `;
+}
+
+// LANÇAMENTOS
+function renderLancamentos(){
+  document.getElementById('page-content').innerHTML = `
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="ptitle">Novo lançamento</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2)">REGISTRADO POR</div>
+        <div class="resp-row" id="resp-row">
+          <div class="resp-btn sel" onclick="selResp(this,'Eduardo')"><div class="avatar" style="background:var(--green-bg);color:var(--green)">ED</div>Eduardo</div>
+          <div class="resp-btn" onclick="selResp(this,'Henrique')"><div class="avatar" style="background:var(--blue-bg);color:var(--blue)">HN</div>Henrique</div>
+          <div class="resp-btn" onclick="selResp(this,'Ana Beatriz')"><div class="avatar" style="background:#FBEAF0;color:#993556">AB</div>Ana Beatriz</div>
+          <div class="resp-btn" onclick="selResp(this,'Júlio')"><div class="avatar" style="background:var(--amber-bg);color:var(--amber)">JÚ</div>Júlio</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">TIPO DE LANÇAMENTO</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn sel" onclick="selTipo(this,'compra-gado')"><div class="ti">🐄</div><div class="tipo-lbl">Compra de gado</div><div class="tipo-sub">despesa</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'venda-gado')"><div class="ti">💰</div><div class="tipo-lbl">Venda de gado</div><div class="tipo-sub">receita</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'pesagem')"><div class="ti">⚖️</div><div class="tipo-lbl">Pesagem</div><div class="tipo-sub">operacional</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'vacinacao')"><div class="ti">💉</div><div class="tipo-lbl">Vacinação</div><div class="tipo-sub">despesa</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'prod-carvao')"><div class="ti">🔥</div><div class="tipo-lbl">Produção carvão</div><div class="tipo-sub">estoque</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'venda-carvao')"><div class="ti">🚛</div><div class="tipo-lbl">Venda carvão</div><div class="tipo-sub">receita</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'despesa')"><div class="ti">📋</div><div class="tipo-lbl">Despesa</div><div class="tipo-sub">custo</div></div>
+      <div class="tipo-btn" onclick="selTipo(this,'manutencao')"><div class="ti">🔧</div><div class="tipo-lbl">Manutenção</div><div class="tipo-sub">custo</div></div>
+    </div>
+    <div id="form-area"></div>
+    <div class="confirm-box" id="confirm-box">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Confirmar lançamento</div>
+      <div id="confirm-rows"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" onclick="document.getElementById('confirm-box').style.display='none'" style="flex:1">Corrigir</button>
+        <button class="btn btn-primary" onclick="salvar()" style="flex:2;justify-content:center">✅ Confirmar e salvar</button>
+      </div>
+    </div>
+    <div class="success-box" id="success-box">
+      <div style="font-size:28px;margin-bottom:8px">✅</div>
+      <div style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:4px">Lançamento salvo!</div>
+      <div style="font-size:13px;color:var(--green-mid);margin-bottom:14px" id="success-msg"></div>
+      <button class="btn btn-primary" onclick="renderLancamentos()">Novo lançamento</button>
+    </div>
+  `;
+  renderForm();
+}
+
+function selResp(el, nome){
+  document.querySelectorAll('.resp-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  respAtual = nome;
+}
+
+function selTipo(el, tipo){
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  tipoAtual = tipo;
+  document.getElementById('confirm-box').style.display='none';
+  document.getElementById('success-box').style.display='none';
+  renderForm();
+}
+
+const LOTES = ['Lote T1','Lote T2','Lote T3','Lote T4','Lote T5'];
+const PROPS_C = ['Pombinha','Pindorama','Morro da Garça','Área do Junco'];
+const PROPS_ALL = ['Taquara',...PROPS_C];
+const DESP_CATS = ['Folha salarial','Encargos trabalhistas','Financiamentos','Insumos do gado','Manutenção de pasto/floresta','Combustível','Máquinas e equipamentos','Transporte'];
+
+function optsArr(arr){ return arr.map(v=>`<option>${v}</option>`).join(''); }
+
+function renderForm(){
+  const t = tipoAtual;
+  let html = '';
+  const ac = (bc,bl) => `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)"><span class="badge ${bc}">${bl}</span><button class="btn btn-primary" onclick="confirmar()">👁️ Revisar e salvar</button></div>`;
+
+  if(t==='compra-gado') html=`<div class="fields f3"><div class="field"><label>Data de entrada</label><input type="date" id="f-data"></div><div class="field"><label>Quantidade (cabeças)</label><input type="number" id="f-qtd" placeholder="Ex: 40"></div><div class="field"><label>Lote de destino</label><select id="f-lote">${optsArr(LOTES)}</select></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Valor total (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 96000"></div><div class="field"><label>Fornecedor / origem</label><input type="text" id="f-origem" placeholder="Nome"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Raça, categoria, condição corporal..."></textarea></div></div>${ac('ba','Despesa — compra de gado')}`;
+
+  else if(t==='venda-gado') html=`<div class="fields f3"><div class="field"><label>Data de saída</label><input type="date" id="f-data"></div><div class="field"><label>Lote de origem</label><select id="f-lote">${optsArr(LOTES)}</select></div><div class="field"><label>Quantidade (cabeças)</label><input type="number" id="f-qtd" placeholder="Ex: 18"></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Peso médio (kg)</label><input type="number" id="f-peso" placeholder="Ex: 450"></div><div class="field"><label>Receita total (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 54000"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Comprador / destino</label><input type="text" id="f-origem" placeholder="Nome"></div></div>${ac('bg','Receita — venda de gado')}`;
+
+  else if(t==='pesagem') html=`<div class="fields f3"><div class="field"><label>Data</label><input type="date" id="f-data"></div><div class="field"><label>Lote</label><select id="f-lote">${optsArr(LOTES)}</select></div><div class="field"><label>Peso médio (kg)</label><input type="number" id="f-peso" placeholder="Ex: 438"></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Peso mínimo (kg)</label><input type="number" id="f-pmin" placeholder="Ex: 390"></div><div class="field"><label>Peso máximo (kg)</label><input type="number" id="f-pmax" placeholder="Ex: 490"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Condição do pasto, lote..."></textarea></div></div>${ac('bb','Pesagem — operacional')}`;
+
+  else if(t==='vacinacao') html=`<div class="fields f3"><div class="field"><label>Data</label><input type="date" id="f-data"></div><div class="field"><label>Lote</label><select id="f-lote">${optsArr([...LOTES,'Todos os lotes'])}</select></div><div class="field"><label>Tipo de vacina</label><input type="text" id="f-vacina" placeholder="Ex: Febre aftosa"></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Nº de doses</label><input type="number" id="f-qtd" placeholder="Ex: 420"></div><div class="field"><label>Custo (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 2100"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Veterinário</label><input type="text" id="f-vet" placeholder="Nome"></div></div>${ac('ba','Despesa — vacinação')}`;
+
+  else if(t==='prod-carvao') html=`<div class="fields f3"><div class="field"><label>Fazenda</label><select id="f-prop">${optsArr(PROPS_C)}</select></div><div class="field"><label>Semana de referência</label><input type="date" id="f-data"></div><div class="field"><label>Toneladas produzidas</label><input type="number" id="f-ton" placeholder="Ex: 9" step="0.1"></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Número de cargas</label><input type="number" id="f-cargas" placeholder="Ex: 3"></div><div class="field"><label>Talhão</label><input type="text" id="f-talhao" placeholder="Ex: Talhão 1"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Qualidade, condições..."></textarea></div></div>${ac('bc','Produção — entrada em estoque')}`;
+
+  else if(t==='venda-carvao') html=`<div class="fields f3"><div class="field"><label>Fazenda</label><select id="f-prop">${optsArr(PROPS_C)}</select></div><div class="field"><label>Data da venda</label><input type="date" id="f-data"></div><div class="field"><label>Toneladas vendidas</label><input type="number" id="f-ton" placeholder="Ex: 12" step="0.1"></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Número de cargas</label><input type="number" id="f-cargas" placeholder="Ex: 4"></div><div class="field"><label>Receita total (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 19200"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Comprador</label><input type="text" id="f-comp" placeholder="Nome"></div></div>${ac('bg','Receita — venda de carvão')}`;
+
+  else if(t==='despesa') html=`<div class="fields f2"><div class="field"><label>Propriedade</label><select id="f-prop">${optsArr(PROPS_ALL)}</select></div><div class="field"><label>Categoria</label><select id="f-cat">${optsArr(DESP_CATS)}</select></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Data</label><input type="date" id="f-data"></div><div class="field"><label>Valor (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 8500"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Descrição</label><input type="text" id="f-desc" placeholder="Detalhe da despesa"></div></div>${ac('br','Despesa operacional')}`;
+
+  else if(t==='manutencao') html=`<div class="fields f2"><div class="field"><label>Propriedade</label><select id="f-prop">${optsArr(PROPS_ALL)}</select></div><div class="field"><label>Tipo</label><select id="f-cat"><option>Pasto / reforma de pastagem</option><option>Floresta / replantio</option><option>Máquinas e equipamentos</option><option>Benfeitorias / cercas</option><option>Forno de carvão</option></select></div></div><div class="fields f2" style="margin-top:12px"><div class="field"><label>Data</label><input type="date" id="f-data"></div><div class="field"><label>Valor (R$)</label><input type="text" id="f-valor" inputmode="decimal" placeholder="Ex: 128.637,60" placeholder="Ex: 6000"></div></div><div class="fields" style="margin-top:12px"><div class="field"><label>Descrição</label><input type="text" id="f-desc" placeholder="O que foi feito"></div></div>${ac('ba','Despesa — manutenção')}`;
+
+  document.getElementById('form-area').innerHTML = `<div class="card">${html}</div>`;
+}
+
+function confirmar(){
+  const ids = ['f-data','f-qtd','f-lote','f-valor','f-peso','f-pmin','f-pmax','f-ton','f-cargas','f-prop','f-cat','f-desc','f-obs','f-origem','f-vet','f-vacina','f-talhao','f-comp'];
+  const labels = {
+    'f-data':'Data','f-qtd':'Quantidade','f-lote':'Lote','f-valor':'Valor (R$)',
+    'f-peso':'Peso médio','f-pmin':'Peso mínimo','f-pmax':'Peso máximo',
+    'f-ton':'Toneladas','f-cargas':'Cargas','f-prop':'Propriedade',
+    'f-cat':'Categoria','f-desc':'Descrição','f-obs':'Observação',
+    'f-origem':'Origem/Destino','f-vet':'Veterinário','f-vacina':'Vacina',
+    'f-talhao':'Talhão','f-comp':'Comprador'
+  };
+  const rows = [{lbl:'Tipo',val:tipoLabel(tipoAtual)},{lbl:'Registrado por',val:respAtual}];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value) rows.push({lbl:labels[id],val:el.value});
+  });
+  document.getElementById('confirm-rows').innerHTML = rows.map(r=>`<div class="confirm-row"><span style="color:var(--text2)">${r.lbl}</span><span style="font-weight:600">${r.val}</span></div>`).join('');
+  const cb=document.getElementById('confirm-box');
+  cb.style.display='block';
+  cb.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+async function salvar(){
+  const g = id => { const el=document.getElementById(id); return el?el.value||null:null; };
+  const gValor = id => {
+    const el=document.getElementById(id);
+    if(!el||!el.value) return null;
+    // Aceita formatos: 128.637,60 ou 128637.60 ou 128637,60
+    const v = el.value.trim().replace(/\./g,'').replace(',','.');
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
+  const data = {
+    registrado_por: respAtual,
+    tipo: tipoAtual,
+    propriedade: g('f-prop') || 'Taquara',
+    lote: g('f-lote'),
+    data_lancamento: g('f-data'),
+    quantidade: g('f-qtd') ? parseFloat(g('f-qtd')) : null,
+    peso_medio: g('f-peso') ? parseFloat(g('f-peso')) : null,
+    toneladas: g('f-ton') ? parseFloat(g('f-ton')) : null,
+    cargas: g('f-cargas') ? parseInt(g('f-cargas')) : null,
+    valor: gValor('f-valor'),
+    categoria: g('f-cat'),
+    descricao: g('f-desc') || g('f-origem') || g('f-comp'),
+    observacao: g('f-obs'),
+    vacina: g('f-vacina'),
+    talhao: g('f-talhao'),
+  };
+  try{
+    await sb('lancamentos','POST',data);
+    document.getElementById('confirm-box').style.display='none';
+    document.getElementById('success-msg').textContent = `${tipoLabel(tipoAtual)} registrado por ${respAtual}`;
+    const sb2=document.getElementById('success-box');
+    sb2.style.display='block';
+    sb2.scrollIntoView({behavior:'smooth',block:'center'});
+    toast('Lançamento salvo com sucesso!');
+  }catch(e){
+    toast('Erro ao salvar: '+e.message, true);
+    document.getElementById('confirm-box').style.display='none';
+  }
+}
+
+function tipoLabel(t){
+  const map={'compra-gado':'Compra de gado','venda-gado':'Venda de gado','pesagem':'Pesagem','vacinacao':'Vacinação','prod-carvao':'Produção de carvão','venda-carvao':'Venda de carvão','despesa':'Despesa operacional','manutencao':'Manutenção'};
+  return map[t]||t;
+}
+
+// INIT
+renderPage('dashboard');
+</script>
+</body>
+</html>
