@@ -891,7 +891,7 @@ async function salvar(){
 const MAPA_CONTAS = {
   '1.04.01': { nome: 'Carvão Vegetal', tipo: 'receita', cat: 'Venda de carvão' },
   '1.03.03.01': { nome: 'Multas e Acréscimos Recebidos', tipo: 'receita', cat: 'Outros recebimentos' },
-  '1.03.03.02': { nome: 'Descontos Obtidos', tipo: 'receita', cat: 'Descontos obtidos' },
+  '1.03.03.02': { nome: 'Descontos Obtidos', tipo: 'deducao', cat: 'Descontos obtidos (dedução da receita)' },
   '1.1.2': { nome: 'Gado de Corte', tipo: 'receita', cat: 'Venda de gado' },
   '2.01.02.01': { nome: 'Salários e Ordenados', tipo: 'despesa', cat: 'Folha salarial' },
   '2.04.02.01': { nome: 'INSS Funcionários', tipo: 'despesa', cat: 'Encargos trabalhistas' },
@@ -1147,11 +1147,13 @@ async function handleSiengeFile(file) {
             const map = Object.entries(MAPA_CONTAS).find(([k])=>c.codigo.startsWith(k));
             const cat = map ? map[1].cat : 'Outros';
             const tipo = map ? map[1].tipo : (c.total>0?'receita':'despesa');
+            const isRec = tipo==='receita';
+            const isDed = tipo==='deducao';
             return `<tr>
               <td class="muted" style="white-space:nowrap">${c.codigo}</td>
               <td>${c.nome}</td>
-              <td><span class="badge ${tipo==='receita'?'bg':'ba'}">${cat}</span></td>
-              <td style="text-align:right;font-weight:600;color:${tipo==='receita'?'var(--green-mid)':'var(--danger)'}">${fmt(Math.abs(c.total))}</td>
+              <td><span class="badge ${isRec?'bg':isDed?'bb':'ba'}">${cat}</span></td>
+              <td style="text-align:right;font-weight:600;color:${isRec?'var(--green-mid)':isDed?'var(--blue)':'var(--danger)'}">${isDed?'-':''}${fmt(Math.abs(c.total))}</td>
             </tr>`;
           }).join('')}
           </tbody>
